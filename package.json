@@ -2,19 +2,26 @@
   "name": "jest-transform-stealthy-require",
   "version": "1.0.0",
   "description": "Transforms stealthy require calls into jest.isolateModules()",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "test": "jest --no-cache"
+    "test": "jest"
   },
   "license": "MIT",
   "devDependencies": {
-    "jest": "^25.1.0"
+    "@types/esprima": "^4.0.2",
+    "@types/estree": "0.0.42",
+    "@types/jest": "^25.1.4",
+    "@types/node": "^13.9.0",
+    "jest": "^25.1.0",
+    "request": "^2.88.2",
+    "request-promise": "^4.2.5",
+    "request-promise-native": "^1.0.8",
+    "ts-jest": "^25.2.1",
+    "typescript": "^3.8.3"
   },
   "dependencies": {
     "escodegen": "^1.14.1",
     "esprima": "^4.0.1",
-    "request": "^2.88.2",
-    "request-promise": "^4.2.5",
-    "request-promise-native": "^1.0.8"
+    "estraverse": "^4.3.0"
   }
 }
