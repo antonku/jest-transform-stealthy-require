@@ -3,8 +3,14 @@
   "version": "1.0.0",
   "description": "Transforms stealthy require calls into jest.isolateModules()",
   "main": "dist/index.js",
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
-    "test": "jest"
+    "build": "tsc",
+    "test": "jest",
+    "lint": "eslint --ext .ts ."
   },
   "license": "MIT",
   "devDependencies": {

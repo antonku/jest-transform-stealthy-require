@@ -1,6 +1,15 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`jest-stealthy-require-transform should transform stealthRequire calls into jest.isolateModules() 1`] = `
+exports[`jest-stealthy-require-transform should transform stealthyRequire calls into jest.isolateModules() when stealthyRequire identifier does not have an initializer 1`] = `
+"var stealthyRequire;
+stealthyRequire = require('stealthy-require');
+var request;
+jest.isolateModules(function () {
+    request = require('request');
+});"
+`;
+
+exports[`jest-stealthy-require-transform should transform stealthyRequire calls into jest.isolateModules() when stealthyRequire identifier has an initializer 1`] = `
 "var stealthyRequire = require('stealthy-require');
 var request;
 jest.isolateModules(function () {

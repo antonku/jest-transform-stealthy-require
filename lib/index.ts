@@ -1,104 +1,73 @@
-import { parseScript, Syntax } from 'esprima';
-import * as estraverse from 'estraverse';
-import * as escodegen from 'escodegen';
+import {BaseNode, Expression, FunctionExpression, VariableDeclarator} from "estree";
+import { parseScript, Syntax } from "esprima";
+import * as estraverse from "estraverse";
+import * as escodegen from "escodegen";
+import { createIsolateModulesAst } from "./isolate-modules-ast";
+import {isCallExpression, isFunctionExpression, isIdentifier, isLiteral, isVariableDeclarator} from "./guards";
 
-function jestIsolateModulesFactory(moduleIdentifier: string, moduleName: string) {
-  return {
-    type: Syntax.ExpressionStatement,
-    expression: {
-      type: Syntax.CallExpression,
-      callee: {
-        type: Syntax.MemberExpression,
-        object: {
-          type: Syntax.Identifier,
-          name: 'jest'
-        },
-        property: {
-          type: Syntax.Identifier,
-          name: 'isolateModules'
-        }
-      },
-      arguments: [
-        {
-          type: Syntax.FunctionExpression,
-          generator: false,
-          params: [],
-          body: {
-            type: Syntax.BlockStatement,
-            body: [
-              {
-                type: Syntax.ExpressionStatement,
-                expression: {
-                  type: Syntax.AssignmentExpression,
-                  operator: '=',
-                  left: {
-                    type: Syntax.Identifier,
-                    name: moduleIdentifier
-                  },
-                  right: {
-                    type: Syntax.CallExpression,
-                    callee: {
-                      type: Syntax.Identifier,
-                      name: 'require'
-                    },
-                    arguments: [
-                      {
-                        type: Syntax.Literal,
-                        value: moduleName
-                      }
-                    ]
-                  }
-                }
-              }
-            ],
-          }
-        }
-      ]
-    }
-  };
-}
-
-function isStealthyRequireDeclaration(declaration) {
-  if (!declaration.init || !declaration.init.callee) {
-    return false;
-  }
-  var callee = declaration.init.callee;
-  var args = declaration.init.arguments;
-  if ((callee.type === 'Identifier') && (callee.name === 'require')) {
-    return args.some(function(arg) {
-      return arg.value && (arg.value.toLowerCase() === 'stealthy-require');
+function isStealthyRequireImport(callExpression: Expression): boolean {
+  if (isCallExpression(callExpression) && (callExpression.callee.type === 'Identifier') && (callExpression.callee.name === 'require')) {
+    return callExpression.arguments.some((arg): boolean => {
+      return isLiteral(arg) && (String(arg.value).toLowerCase() === 'stealthy-require');
     });
   }
   return false;
 }
 
-function transform(src: string) {
-  const program = parseScript(src);
+function getStealthyRequireIdentifiers(ast: BaseNode): string[] {
+  const stealthyRequireIdentifiers: string[] = [];
 
-  const stealthyRequireIdentifiers = [];
-  estraverse.traverse(program, {
+  estraverse.traverse(ast, {
     enter: (node) => {
-        if (isStealthyRequireDeclaration(node) && ('name' in node.id)) {
-          stealthyRequireIdentifiers.push(node.id.name);
-        }
+      switch (node.type) {
+        case Syntax.VariableDeclarator:
+          if (node.init && node.init.callee && isStealthyRequireImport(node.init)) {
+            stealthyRequireIdentifiers.push(node.id.name);
+          }
+          break;
+        case Syntax.AssignmentExpression:
+          if (isStealthyRequireImport(node.right)) {
+            stealthyRequireIdentifiers.push(node.left.name);
+          }
+          break;
+      }
     }
   });
 
-  estraverse.traverse(program,  {
+  return stealthyRequireIdentifiers;
+}
+
+function replaceStealthyRequireCalls<T extends BaseNode>(ast: T, identifiers: string[]): T {
+
+  estraverse.traverse(ast,  {
     enter: (node, parent) => {
       if (!Array.isArray(node.declarations)) {
         return;
       }
-      node.declarations.forEach((declaration) => {
-        if (declaration.init && declaration.init.callee && stealthyRequireIdentifiers.includes(declaration.init.callee.name)) {
+
+      node.declarations.forEach((declaration: BaseNode) => {
+        if (isVariableDeclarator(declaration) &&
+            declaration.init &&
+            isCallExpression(declaration.init) &&
+            isIdentifier(declaration.init.callee) &&
+            identifiers.includes(declaration.init.callee.name)
+        ) {
+
           const fn = declaration.init.arguments[1];
-          let requiredModule;
-          fn.body.body.forEach(function (innerNode) {
-            if (innerNode.argument && innerNode.argument.callee && innerNode.argument.callee.name === 'require') {
-              requiredModule = innerNode.argument.arguments[0].value;
-              delete declaration.init;
-              const isolateModulesNode = jestIsolateModulesFactory(declaration.id.name, requiredModule);
+
+          if (!isFunctionExpression(fn)) {
+            return;
+          }
+
+          fn.body.body.forEach((innerNode) => {
+            const expression = ("argument" in innerNode) && innerNode.argument;
+            if (isIdentifier(declaration.id) && expression && isCallExpression(expression) && isIdentifier(expression.callee) && expression.callee.name === 'require') {
+              const requiredModule = isLiteral(expression.arguments[0]) && expression.arguments[0].value;
+
+              const isolateModulesNode = createIsolateModulesAst(declaration.id.name, String(requiredModule));
               const currNodePos = parent.body.indexOf(node);
+
+              delete declaration.init;
               parent.body.splice(currNodePos + 1, 0, isolateModulesNode);
             }
           })
@@ -107,12 +76,20 @@ function transform(src: string) {
     }
   });
 
-  return escodegen.generate(program);
+  return ast;
 }
 
-
 module.exports = {
-  process(src) {
-    return transform(src);
+  process(src: string): string {
+    const program = parseScript(src);
+
+    const identifiers = getStealthyRequireIdentifiers(program);
+    if (!identifiers.length) {
+      return src;
+    }
+
+    const updatedProgram = replaceStealthyRequireCalls(program, identifiers);
+
+    return escodegen.generate(updatedProgram);
   },
 };
