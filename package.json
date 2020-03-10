@@ -1,0 +1,21 @@
+{
+  "name": "jest-rp",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest --no-cache"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "jest": "^25.1.0"
+  },
+  "dependencies": {
+    "escodegen": "^1.14.1",
+    "esprima": "^4.0.1",
+    "request": "^2.88.2",
+    "request-promise": "^4.2.5",
+    "request-promise-native": "^1.0.8"
+  }
+}
