@@ -8,34 +8,23 @@ import {
   isFunctionExpression,
   isIdentifier,
   isRequireExpression,
+  isStealthyRequireVariableDeclarator,
+  isStealthyRequireAssignmentExpression,
   isVariableDeclarator
 } from "./guards";
-
-function isStealthyRequireImport(callExpression: Expression): boolean {
-  if (isRequireExpression(callExpression)) {
-    return callExpression.arguments.some((arg): boolean => {
-      return String(arg.value).toLowerCase() === 'stealthy-require';
-    });
-  }
-  return false;
-}
 
 function getStealthyRequireIdentifiers(ast: BaseNode): string[] {
   const stealthyRequireIdentifiers: string[] = [];
 
   estraverse.traverse(ast, {
     enter: (node) => {
-      switch (node.type) {
-        case Syntax.VariableDeclarator:
-          if (node.init && node.init.callee && isStealthyRequireImport(node.init)) {
-            stealthyRequireIdentifiers.push(node.id.name);
-          }
-          break;
-        case Syntax.AssignmentExpression:
-          if (isStealthyRequireImport(node.right)) {
-            stealthyRequireIdentifiers.push(node.left.name);
-          }
-          break;
+      if (isStealthyRequireVariableDeclarator(node)) {
+        stealthyRequireIdentifiers.push(node.id.name);
+        return;
+      }
+      if (isStealthyRequireAssignmentExpression(node)) {
+        stealthyRequireIdentifiers.push(node.left.name);
+        return;
       }
     }
   });

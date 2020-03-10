@@ -4,7 +4,7 @@
     "declaration": true,
     "module": "commonjs",
     "target": "es5",
-    "lib": ["es5"],
+    "lib": ["es5", "dom"],
     "strict": true,
     "noImplicitAny": false,
     "moduleResolution": "node",

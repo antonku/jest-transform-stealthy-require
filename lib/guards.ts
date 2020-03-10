@@ -1,10 +1,11 @@
 import {
+    AssignmentExpression,
     BaseNode,
     CallExpression,
     Expression,
     FunctionExpression,
     Identifier,
-    Literal, SimpleCallExpression,
+    Literal, SimpleCallExpression, SimpleLiteral,
     VariableDeclarator
 } from "estree";
 import {Syntax} from "esprima";
@@ -29,21 +30,53 @@ export function isFunctionExpression(node: BaseNode): node is FunctionExpression
     return (node as FunctionExpression).type === Syntax.FunctionExpression;
 }
 
+export function isAssignmentExpression(node: BaseNode): node is AssignmentExpression {
+    return (node as AssignmentExpression).type === Syntax.AssignmentExpression;
+}
+
+interface RequireIdentifier extends Identifier {
+    name: "require";
+}
+
 export interface RequireExpression extends SimpleCallExpression {
-    callee: {
-        type: "Identifier",
-        name: "require"
-    };
-    arguments: [
-        {
-            "type": "Literal",
-            "value": string
-        }
-    ]
+    callee: RequireIdentifier;
+    arguments: [Literal];
 }
 
 export function isRequireExpression(node: BaseNode): node is RequireExpression {
-    return (node as RequireExpression).callee.name === 'require' &&
-        Array.isArray((node as RequireExpression).arguments) &&
-        isLiteral((node as RequireExpression).arguments[0]);
+    const { callee, arguments: args } = (node as RequireExpression);
+    return callee.name === 'require' &&
+        Array.isArray(args) &&
+        args.length === 1 &&
+        isLiteral(args[0]);
+}
+
+interface StealthyRequireLiteral extends SimpleLiteral {
+    value: "stealthy-require";
+}
+
+interface StealthyRequireImport extends RequireExpression {
+    arguments: [StealthyRequireLiteral];
+}
+
+function isStealthyRequireImport(node: BaseNode): node is StealthyRequireImport {
+    return isRequireExpression(node) && node.arguments[0].value === "stealthy-require";
+}
+
+export interface StealthyRequireVariableDeclarator extends VariableDeclarator {
+    init: StealthyRequireImport;
+    id: Identifier;
+}
+
+export function isStealthyRequireVariableDeclarator(node: BaseNode): node is StealthyRequireVariableDeclarator {
+    return isVariableDeclarator(node) && !!node.init && isStealthyRequireImport(node.init);
+}
+
+interface StealthyRequireAssignmentExpression extends AssignmentExpression {
+    left: Identifier;
+    right: StealthyRequireImport;
+}
+
+export function isStealthyRequireAssignmentExpression(node: BaseNode): node is StealthyRequireAssignmentExpression {
+    return isAssignmentExpression(node) && isStealthyRequireImport(node.right);
 }
