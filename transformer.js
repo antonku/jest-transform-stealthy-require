@@ -26,24 +26,27 @@ function jestIsolateModulesFactory(moduleIdentifier, moduleName) {
             type: esprima.Syntax.BlockStatement,
             body: [
               {
-                type: esprima.Syntax.AssignmentExpression,
-                operator: '=',
-                left: {
-                  type: esprima.Syntax.Identifier,
-                  name: moduleIdentifier
-                },
-                right: {
-                  type: esprima.Syntax.CallExpression,
-                  callee: {
+                type: esprima.Syntax.ExpressionStatement,
+                expression: {
+                  type: esprima.Syntax.AssignmentExpression,
+                  operator: '=',
+                  left: {
                     type: esprima.Syntax.Identifier,
-                    name: 'require'
+                    name: moduleIdentifier
                   },
-                  arguments: [
-                    {
-                      type: esprima.Syntax.Literal,
-                      value: moduleName
-                    }
-                  ]
+                  right: {
+                    type: esprima.Syntax.CallExpression,
+                    callee: {
+                      type: esprima.Syntax.Identifier,
+                      name: 'require'
+                    },
+                    arguments: [
+                      {
+                        type: esprima.Syntax.Literal,
+                        value: moduleName
+                      }
+                    ]
+                  }
                 }
               }
             ],
@@ -59,9 +62,9 @@ function isStealthyRequireDeclaration(declaration) {
     return false;
   }
   var callee = declaration.init.callee;
-  var arguments = declaration.init.arguments;
+  var args = declaration.init.arguments;
   if ((callee.type === 'Identifier') && (callee.name === 'require')) {
-    return arguments.some(function(arg) {
+    return args.some(function(arg) {
       return arg.value && (arg.value.toLowerCase() === 'stealthy-require');
     });
   }
@@ -80,12 +83,13 @@ function identifierReplacerFactory (identifier) {
         if (declaration.init && declaration.init.callee && declaration.init.callee.name === identifier) {
           var fn = declaration.init.arguments[1];
           var requiredModule;
-          fn.body.body.forEach(function (node) {
-            if (node.argument && node.argument.callee && node.argument.callee.name === 'require') {
-              requiredModule = node.argument.arguments[0].value;
+          fn.body.body.forEach(function (innerNode) {
+            if (innerNode.argument && innerNode.argument.callee && innerNode.argument.callee.name === 'require') {
+              requiredModule = innerNode.argument.arguments[0].value;
               delete declaration.init;
-              var isolateModulesNode = jestIsolateModulesFactory(declaration.id.name, requiredModule)
-              console.log(escodegen.generate(isolateModulesNode));
+              var isolateModulesNode = jestIsolateModulesFactory(declaration.id.name, requiredModule);
+              var currNodePos = parent.body.indexOf(node);
+              parent.body.splice(currNodePos + 1, 0, isolateModulesNode);
             }
           })
         }

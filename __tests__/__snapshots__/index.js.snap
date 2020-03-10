@@ -1,0 +1,9 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`jest-stealthy-require-transform should transform stealthRequire calls into jest.isolateModules() 1`] = `
+"var stealthyRequire = require('stealthy-require');
+var request;
+jest.isolateModules(function () {
+    request = require('request');
+});"
+`;

@@ -11,20 +11,9 @@ describe('jest-stealthy-require-transform', () => {
         function () {
           require('tough-cookie');
       }, module);
-    `
+    `;
     const transformed = transformer.process(source);
-    console.log(transformed);
-  })
+    expect(transformed).toMatchSnapshot();
+  });
 
-  it('should show ast for jest.isolateModules()', () => {
-    const source = `
-      var myModule;
-      jest.isolateModules(function () {
-        myModule = require('module-name');
-      });
-    `
-    const transformed = transformer.process(source);
-    console.log(transformed);
-  })
-
-})
+});
