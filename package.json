@@ -1,13 +1,12 @@
 {
-  "name": "jest-rp",
+  "name": "jest-transform-stealthy-require",
   "version": "1.0.0",
-  "description": "",
+  "description": "Transforms stealthy require calls into jest.isolateModules()",
   "main": "index.js",
   "scripts": {
     "test": "jest --no-cache"
   },
-  "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "jest": "^25.1.0"
   },
