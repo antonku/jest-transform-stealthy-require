@@ -3,12 +3,18 @@ import { parseScript, Syntax } from "esprima";
 import * as estraverse from "estraverse";
 import * as escodegen from "escodegen";
 import { createIsolateModulesAst } from "./isolate-modules-ast";
-import {isCallExpression, isFunctionExpression, isIdentifier, isLiteral, isVariableDeclarator} from "./guards";
+import {
+  isCallExpression,
+  isFunctionExpression,
+  isIdentifier,
+  isRequireExpression,
+  isVariableDeclarator
+} from "./guards";
 
 function isStealthyRequireImport(callExpression: Expression): boolean {
-  if (isCallExpression(callExpression) && (callExpression.callee.type === 'Identifier') && (callExpression.callee.name === 'require')) {
+  if (isRequireExpression(callExpression)) {
     return callExpression.arguments.some((arg): boolean => {
-      return isLiteral(arg) && (String(arg.value).toLowerCase() === 'stealthy-require');
+      return String(arg.value).toLowerCase() === 'stealthy-require';
     });
   }
   return false;
@@ -61,8 +67,8 @@ function replaceStealthyRequireCalls<T extends BaseNode>(ast: T, identifiers: st
 
           fn.body.body.forEach((innerNode) => {
             const expression = ("argument" in innerNode) && innerNode.argument;
-            if (isIdentifier(declaration.id) && expression && isCallExpression(expression) && isIdentifier(expression.callee) && expression.callee.name === 'require') {
-              const requiredModule = isLiteral(expression.arguments[0]) && expression.arguments[0].value;
+            if (isIdentifier(declaration.id) && expression && isRequireExpression(expression)) {
+              const requiredModule = expression.arguments[0].value;
 
               const isolateModulesNode = createIsolateModulesAst(declaration.id.name, String(requiredModule));
               const currNodePos = parent.body.indexOf(node);

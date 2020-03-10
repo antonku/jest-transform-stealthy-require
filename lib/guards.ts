@@ -4,7 +4,7 @@ import {
     Expression,
     FunctionExpression,
     Identifier,
-    Literal,
+    Literal, SimpleCallExpression,
     VariableDeclarator
 } from "estree";
 import {Syntax} from "esprima";
@@ -27,4 +27,23 @@ export function isVariableDeclarator(node: BaseNode): node is VariableDeclarator
 
 export function isFunctionExpression(node: BaseNode): node is FunctionExpression {
     return (node as FunctionExpression).type === Syntax.FunctionExpression;
+}
+
+export interface RequireExpression extends SimpleCallExpression {
+    callee: {
+        type: "Identifier",
+        name: "require"
+    };
+    arguments: [
+        {
+            "type": "Literal",
+            "value": string
+        }
+    ]
+}
+
+export function isRequireExpression(node: BaseNode): node is RequireExpression {
+    return (node as RequireExpression).callee.name === 'require' &&
+        Array.isArray((node as RequireExpression).arguments) &&
+        isLiteral((node as RequireExpression).arguments[0]);
 }
