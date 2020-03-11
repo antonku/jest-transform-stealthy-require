@@ -45,7 +45,7 @@ export interface RequireExpression extends SimpleCallExpression {
 
 export function isRequireExpression(node: BaseNode): node is RequireExpression {
     const { callee, arguments: args } = (node as RequireExpression);
-    return callee.name === 'require' &&
+    return callee && callee.name === 'require' &&
         Array.isArray(args) &&
         args.length === 1 &&
         isLiteral(args[0]);

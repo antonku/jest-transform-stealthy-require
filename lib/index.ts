@@ -49,21 +49,23 @@ function replaceStealthyRequireCalls<T extends BaseNode>(ast: T, identifiers: st
         ) {
 
           const fn = declaration.init.arguments[1];
+          const moduleIdentifier = isIdentifier(declaration.id) && declaration.id.name;
 
-          if (!isFunctionExpression(fn)) {
+          if (!isFunctionExpression(fn) || !moduleIdentifier) {
             return;
           }
 
-          fn.body.body.forEach((innerNode) => {
-            const expression = ("argument" in innerNode) && innerNode.argument;
-            if (isIdentifier(declaration.id) && expression && isRequireExpression(expression)) {
-              const requiredModule = expression.arguments[0].value;
+          estraverse.traverse(fn,  {
+            enter: (expression) => {
+              if (expression && isRequireExpression(expression)) {
+                const requiredModule = expression.arguments[0].value;
 
-              const isolateModulesNode = createIsolateModulesAst(declaration.id.name, String(requiredModule));
-              const currNodePos = parent.body.indexOf(node);
+                const isolateModulesNode = createIsolateModulesAst(moduleIdentifier, String(requiredModule));
+                const currNodePos = parent.body.indexOf(node);
 
-              delete declaration.init;
-              parent.body.splice(currNodePos + 1, 0, isolateModulesNode);
+                delete declaration.init;
+                parent.body.splice(currNodePos + 1, 0, isolateModulesNode);
+              }
             }
           })
         }
