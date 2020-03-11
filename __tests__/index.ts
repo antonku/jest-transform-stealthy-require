@@ -1,4 +1,4 @@
-const transformer = require('../lib');
+import transformer from '../lib';
 
 describe('jest-stealthy-require-transform', () => {
 

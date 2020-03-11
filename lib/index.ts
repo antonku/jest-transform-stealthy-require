@@ -1,5 +1,5 @@
-import {BaseNode, Expression, FunctionExpression, VariableDeclarator} from "estree";
-import { parseScript, Syntax } from "esprima";
+import { BaseNode } from "estree";
+import { parseScript } from "esprima";
 import * as estraverse from "estraverse";
 import * as escodegen from "escodegen";
 import { createIsolateModulesAst } from "./isolate-modules-ast";
@@ -103,7 +103,7 @@ function replaceStealthyRequireCalls<T extends BaseNode>(ast: T, identifiers: st
   return ast;
 }
 
-module.exports = {
+export default {
   process(src: string): string {
     const program = parseScript(src);
 

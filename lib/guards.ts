@@ -61,7 +61,7 @@ export function isRequireExpression(node: BaseNode): node is RequireExpression {
 }
 
 interface GenericLiteral<T extends string> extends SimpleLiteral {
-    value: T
+    value: T;
 }
 
 interface RequireImport<T extends string> extends RequireExpression {

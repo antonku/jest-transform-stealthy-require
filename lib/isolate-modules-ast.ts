@@ -1,6 +1,6 @@
 import { Syntax } from "esprima";
 
-export function createIsolateModulesAst(moduleIdentifier: string, moduleName: string) {
+export function createIsolateModulesAst(moduleIdentifier: string, moduleName: string): object {
     return {
         type: Syntax.ExpressionStatement,
         expression: {
