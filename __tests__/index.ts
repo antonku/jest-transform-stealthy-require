@@ -7,10 +7,7 @@ describe('jest-stealthy-require-transform', () => {
       var stealthyRequire = require('stealthy-require');
       var request = stealthyRequire(require.cache, function () {
         return require('request');
-        },
-        function () {
-          require('tough-cookie');
-      }, module);
+      });
     `;
     const transformed = transformer.process(source);
     expect(transformed).toMatchSnapshot();
@@ -20,6 +17,30 @@ describe('jest-stealthy-require-transform', () => {
     const source = `
       var stealthyRequire;
       stealthyRequire = require('stealthy-require');
+      var request = stealthyRequire(require.cache, function () {
+        return require('request');
+      });
+    `;
+    const transformed = transformer.process(source);
+    expect(transformed).toMatchSnapshot();
+  });
+
+  it('should transform stealthyRequire calls into jest.isolateModules() when non-cached module identifier does not have initializer', () => {
+    const source = `
+      var stealthyRequire;
+      stealthyRequire = require('stealthy-require');
+      var request;
+      request = stealthyRequire(require.cache, function () {
+        return require('request');
+      });
+    `;
+    const transformed = transformer.process(source);
+    expect(transformed).toMatchSnapshot();
+  });
+
+  it('should transform stealthyRequire calls into jest.isolateModules() and drop extra arguments', () => {
+    const source = `
+      var stealthyRequire = require('stealthy-require');
       var request = stealthyRequire(require.cache, function () {
         return require('request');
         },

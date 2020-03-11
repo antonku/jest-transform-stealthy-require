@@ -10,7 +10,9 @@ import {
   isRequireExpression,
   isStealthyRequireVariableDeclarator,
   isStealthyRequireAssignmentExpression,
-  isVariableDeclarator
+  isVariableDeclarator,
+  isAssignmentExpression,
+  isExpressionStatement, isVariableDeclaration
 } from "./guards";
 
 function getStealthyRequireIdentifiers(ast: BaseNode): string[] {
@@ -32,11 +34,48 @@ function getStealthyRequireIdentifiers(ast: BaseNode): string[] {
   return stealthyRequireIdentifiers;
 }
 
+function replaceCacheBypassExpression<T extends BaseNode>(
+    ast: T,
+    moduleIdentifier: string | false,
+    callback
+): void {
+
+  if (!isFunctionExpression(ast) || !moduleIdentifier) {
+    return;
+  }
+
+  estraverse.traverse(ast,  {
+    enter: (expression) => {
+      if (expression && isRequireExpression(expression)) {
+        const requiredModule = expression.arguments[0].value;
+
+        const isolateModulesNode = createIsolateModulesAst(moduleIdentifier, String(requiredModule));
+        callback(isolateModulesNode);
+      }
+    }
+  })
+}
+
 function replaceStealthyRequireCalls<T extends BaseNode>(ast: T, identifiers: string[]): T {
 
   estraverse.traverse(ast,  {
     enter: (node, parent) => {
-      if (!Array.isArray(node.declarations)) {
+      if (isExpressionStatement(node) &&
+          isAssignmentExpression(node.expression) &&
+          isCallExpression(node.expression.right) &&
+          isIdentifier(node.expression.right.callee) &&
+          identifiers.includes(node.expression.right.callee.name)
+      ) {
+        const fn = node.expression.right.arguments[1];
+        const moduleIdentifier = isIdentifier(node.expression.left) && node.expression.left.name;
+
+        replaceCacheBypassExpression(fn, moduleIdentifier, (isolateModulesNode) => {
+          const currNodePos = parent.body.indexOf(node);
+          parent.body.splice(currNodePos, 1, isolateModulesNode);
+        });
+      }
+
+      if (!isVariableDeclaration(node)) {
         return;
       }
 
@@ -51,23 +90,11 @@ function replaceStealthyRequireCalls<T extends BaseNode>(ast: T, identifiers: st
           const fn = declaration.init.arguments[1];
           const moduleIdentifier = isIdentifier(declaration.id) && declaration.id.name;
 
-          if (!isFunctionExpression(fn) || !moduleIdentifier) {
-            return;
-          }
-
-          estraverse.traverse(fn,  {
-            enter: (expression) => {
-              if (expression && isRequireExpression(expression)) {
-                const requiredModule = expression.arguments[0].value;
-
-                const isolateModulesNode = createIsolateModulesAst(moduleIdentifier, String(requiredModule));
-                const currNodePos = parent.body.indexOf(node);
-
-                delete declaration.init;
-                parent.body.splice(currNodePos + 1, 0, isolateModulesNode);
-              }
-            }
-          })
+          replaceCacheBypassExpression(fn, moduleIdentifier, (isolateModulesNode) => {
+            const currNodePos = parent.body.indexOf(node);
+            delete declaration.init;
+            parent.body.splice(currNodePos + 1, 0, isolateModulesNode);
+          });
         }
       });
     }
