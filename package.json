@@ -20,6 +20,14 @@
     "lint": "eslint --ext .ts ."
   },
   "license": "MIT",
+  "peerDependencies": {
+    "jest": ">=24.0.0"
+  },
+  "dependencies": {
+    "escodegen": "^1.14.1",
+    "esprima": "^4.0.1",
+    "estraverse": "^4.3.0"
+  },
   "devDependencies": {
     "@types/esprima": "^4.0.2",
     "@types/estree": "0.0.42",
@@ -34,10 +42,5 @@
     "request-promise-native": "^1.0.8",
     "ts-jest": "^25.2.1",
     "typescript": "^3.8.3"
-  },
-  "dependencies": {
-    "escodegen": "^1.14.1",
-    "esprima": "^4.0.1",
-    "estraverse": "^4.3.0"
   }
 }
