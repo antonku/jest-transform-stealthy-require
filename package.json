@@ -7,9 +7,16 @@
     "dist",
     "src"
   ],
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "repository": {
+    "type" : "git",
+    "url" : "https://github.com/antonku/jest-transform-stealthy-require.git"
+  },
   "scripts": {
     "build": "tsc",
-    "test": "jest",
+    "test": "jest --no-cache",
     "lint": "eslint --ext .ts ."
   },
   "license": "MIT",

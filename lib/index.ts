@@ -103,7 +103,7 @@ function replaceStealthyRequireCalls<T extends BaseNode>(ast: T, identifiers: st
   return ast;
 }
 
-export default {
+export = {
   process(src: string): string {
     const program = parseScript(src);
 
