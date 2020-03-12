@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "files": [
     "dist",
-    "src"
+    "lib"
   ],
   "engines": {
     "node": ">=8.0.0"
