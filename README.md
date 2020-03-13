@@ -32,12 +32,13 @@ module.exports = {
 #### Jest + babel-jest
 **jest.config.js**
 ```javascript
+const { requestPromise } = require('jest-transform-stealthy-require/dist/presets');
 
 module.exports = {
   // ...
   transform: {
-    "^.+\\.[t|j]sx?$": "babel-jest",
-    ...requestPromise.transform
+    ...requestPromise.transform,
+    "^.+\\.[t|j]sx?$": "babel-jest"
   },
   transformIgnorePatterns: [requestPromise.transformIgnorePattern]
 }
@@ -46,6 +47,7 @@ module.exports = {
 #### Jest + ts-jest
 **jest.config.js**
 ```javascript
+const { requestPromise } = require('jest-transform-stealthy-require/dist/presets');
 const { defaults: tsjPreset } = require('ts-jest/presets');
 // [OR] const { jsWithTs: tsjPreset } = require('ts-jest/presets');
 // [OR] const { jsWithBabel: tsjPreset } = require('ts-jest/presets');
@@ -53,8 +55,8 @@ const { defaults: tsjPreset } = require('ts-jest/presets');
 module.exports = {
   // ...
   transform: {
-    ...tsjPreset.transform,
-    ...requestPromise.transform
+    ...requestPromise.transform,
+    ...tsjPreset.transform
   },
   transformIgnorePatterns: [requestPromise.transformIgnorePattern]
 }
