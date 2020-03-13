@@ -1,4 +1,4 @@
-import transformer from '../lib';
+import transformer from '../src';
 
 describe('jest-stealthy-require-transform', () => {
 
