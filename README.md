@@ -17,7 +17,7 @@ npm install --save-dev jest-transform-stealthy-require
 
 ## Jest configuration
 
-### For request-promise/request-promise native issue
+### For request-promise/request-promise-native issue
 #### Jest
 **jest.config.js**
 ```javascript
