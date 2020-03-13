@@ -1,5 +1,7 @@
 # jest-transform-stealthy-require
 
+![Node.js CI](https://github.com/antonku/jest-transform-stealthy-require/workflows/Node.js%20CI/badge.svg?branch=master)
+
 Transforms `stealthy-require` calls into `jest.isolateModules()`
 
 # Motivation
