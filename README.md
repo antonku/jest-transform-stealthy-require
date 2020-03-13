@@ -69,7 +69,7 @@ The transformer can be used to replace stealthy-require calls in arbitrary modul
 module.exports = {
   // ...
   transform: {
-    'file_pattern_for_module_that_uses_stealthy_require': 'jest-transform-stealthy-require'
+    'my_pattern_to_module_to_transform': 'jest-transform-stealthy-require'
   }
 };
 ```
